@@ -15,12 +15,6 @@
   - [1.2 自变量定义](#12-自变量定义-independent-variables--the-input-capital-investment)
   - [1.3 因变量定义](#13-因变量定义-dependent-variables--the-output-long-term-commercial-value)
   - [1.4 核心研究问题](#14-核心研究问题-core-research-questions)
-    - [控制变量](#控制变量-stratification-variables)
-    - [统计路径 A — 概率分布映射](#统计路径-acontinuous-x分箱-binary-y--概率分布映射-probability-distribution-mapping)
-    - [统计路径 B — 非线性门槛分析](#统计路径-bdiscrete--ordinal-x--binary-y--非线性门槛分析-non-linear-threshold-analysis)
-    - [统计路径 C — 交叉列联分析](#统计路径-cordinal-x--nominal-y--交叉列联分析-cross-tabulation--distribution-shift)
-    - [统计路径 D — 相关性与趋势分析](#统计路径-dcontinuous-x--continuous-y--相关性与趋势分析-correlation--scatter-trend-analysis)
-    - [统计路径 E — 列联表与优势比](#统计路径-ebinary-x--binary-y--列联表与优势比-contingency-table--odds-ratio)
   - [1.5 变量关系与预期假设](#15-变量关系与预期假设-hypothesized-relationships)
 - [Step 2: 数据采集与筛选](#step-2-数据采集与筛选-data-collection--filtering)
   - [2.1 目标数据源](#21-目标数据源)
@@ -37,18 +31,15 @@
   - [4.2 描述性统计](#42-描述性统计-descriptive-statistics)
   - [4.3 EDA 可视化清单](#43-eda-可视化清单)
   - [4.4 与队友协作要点](#44-与队友协作要点)
-- [Step 5: 深度分析与建模](#step-5-深度分析与建模-in-depth-analysis--modeling)
-  - [5.1 路径 A：概率分布映射 (Sub-RQ 1a–1d)](#51-路径-a-分析概率分布映射-sub-rq-1a1d)
-  - [5.2 路径 B：非线性门槛分析 (Sub-RQ 2a–2b)](#52-路径-b-分析非线性门槛分析-sub-rq-2a2b)
-  - [5.3 路径 C：交叉列联分析 (Sub-RQ 3)](#53-路径-c-分析交叉列联分析-sub-rq-3)
-  - [5.4 路径 D：相关性与趋势分析 (Sub-RQ 4a–4b)](#54-路径-d-分析相关性与趋势分析-sub-rq-4a4b)
-  - [5.5 路径 E：列联表与优势比 (Sub-RQ 5)](#55-路径-e-分析列联表与优势比-sub-rq-5-priority-ii)
-  - [5.6 控制变量稳健性检验](#56-控制变量稳健性检验-robustness-check)
-  - [5.7 可视化增强](#57-可视化增强可选)
+- [Step 5: 核心分析与可视化](#step-5-核心分析与可视化-core-analysis--visualization)
+  - [5.1 Fig 1 — EDA 概览（Plotly Subplots）](#51-fig-1--eda-概览plotly-subplots)
+  - [5.2 Fig 2 — RQ1 融资总量与退出率（双轴 Bar + Line）](#52-fig-2--rq1-融资总量与退出率双轴-bar--line)
+  - [5.3 Fig 3 — RQ2 融资轮次门槛效应（Scatter + 门槛标注）](#53-fig-3--rq2-融资轮次门槛效应scatter--门槛标注)
+  - [5.4 Fig 4 — RQ3 融资速度交叉分析（Seaborn Heatmap）](#54-fig-4--rq3-融资速度交叉分析seaborn-heatmap)
 - [Step 6: 解读与叙事](#step-6-解读与叙事-interpretation--storytelling)
-  - [6.1 从数据到故事的转化框架](#61-从数据到故事的转化框架)
-  - [6.2 Reflection Document 写作指南](#62-reflection-document-写作指南)
-  - [6.3 必须声明的统计局限性](#63-必须声明的统计局限性-statistical-limitations)
+  - [6.1 Presentation 脚本](#61-presentation-脚本)
+  - [6.2 Reflection 写作框架](#62-reflection-写作框架)
+  - [6.3 统计局限性](#63-统计局限性-statistical-limitations)
   - [6.4 最终检查清单](#64-最终检查清单-final-checklist)
 
 ---
@@ -104,183 +95,50 @@
 
 ### 1.4 核心研究问题 (Core Research Questions)
 
-> **方法论说明：** 以下研究问题严格遵循 **「映射变量（数据类型）→ 统计路径 → 可计算的子研究问题」** 逻辑链推导。**组织原则为统计路径 (Statistical Path)**，而非主题维度。每个 Sub-RQ 的统计路径由 X 与 Y 的数据类型组合唯一确定。
+> **设计原则：** 三个 RQ 从资本投入的**三个维度**（总量、轮次、速度）切入同一个因变量（`Exit_Success`），形成「三维度 × 同一 Y」的平行结构。所有图表的 Y 轴含义统一，观众只需理解一个概念即可。
 
-#### 控制变量 (Stratification Variables)
+**总研究问题 (Overarching RQ):**
+> 在 VC 机制下，什么样的融资模式最可能带来成功退出（IPO 或 Acquired）？
 
-在描述性统计与分组对比框架下，控制变量通过 **分层 `groupby`** 实现（而非回归模型中的协变量）。以下变量应在核心分析完成后作为分层维度，验证结论的稳健性 (Robustness Check)：
-
-| 变量名 | 数据类型 | 来源 | 控制逻辑 |
-|--------|----------|------|----------|
-| `category_code` | Categorical (Nominal) | `objects.csv` | 不同行业（如 `software` vs `biotech`）的融资规模、退出率和退出路径存在结构性差异。不分层则结论可能仅反映行业组成效应 (Composition Effect)。 |
-| `country_code` | Categorical (Nominal) | `objects.csv` | 美国公司在融资体量和退出概率上系统性高于其他地区。不控制地域将使融资甜蜜点结论偏向美国市场特征。 |
-| `founded_year` | Discrete (Integer) | `objects.csv` | 不同年份面对的市场环境（如 2008 金融危机、2020 疫情）截然不同。年份分层可检验结论的时间稳健性 (Temporal Robustness)。 |
-
-> **实施方式：** 核心分析完成后，选择 1-2 个控制变量做分层验证：
-> ```python
-> # 示例：检验 RQ1a 结论是否在不同行业中一致
-> df.groupby(['funding_bracket', 'category_code'])['exit_success'].mean().unstack()
-> ```
-> 若结论在分层后保持一致，则稳健性增强；若出现 Simpson's Paradox，则需在报告中声明。
-
----
-
-#### 统计路径 A：Continuous X（分箱）→ Binary Y — 概率分布映射 (Probability Distribution Mapping)
-
-**路径逻辑：** 将连续型自变量分箱 (Binning) 后，计算每个区间内二元因变量的条件概率 P(Y=1|X∈bin)，识别非线性趋势（如边际递减、甜蜜点）。
-
----
-
-**Sub-RQ 1a [Priority I]** — *对应原 RQ1*
+#### RQ1：融了多少钱？— 融资总量与退出概率
 
 | 项目 | 内容 |
 |------|------|
-| **选定变量** | X = `Total_Funding_USD`（分箱为 `funding_bracket`：<1M / 1-10M / 10-50M / 50-100M / 100-500M / >500M）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Continuous Float → Binning → Binary → 分组条件概率 P(Exit=1 \| Bracket) |
-| **子研究问题** | 在不同的累计融资总额区间内，初创公司成功退出（IPO 或 Acquired）的条件概率如何变化？是否存在边际递减效应 (Diminishing Marginal Returns)，即超过某一融资阈值后退出率增幅放缓？ |
-| **可执行步骤** | `df.groupby('funding_bracket')['exit_success'].agg(['mean','count'])` → `px.bar(x='funding_bracket', y='mean', text='count', title='Exit Rate by Funding Bracket')` |
+| **维度** | Volume（资本体量） |
+| **变量** | X = `Total_Funding_USD`（分箱为 `funding_bracket`：<1M / 1-10M / 10-50M / 50-100M / 100-500M / >500M）；Y = `Exit_Success`（Binary 0/1） |
+| **统计方法** | `pd.cut` → `groupby` → 条件概率 P(Exit=1 \| Bracket) |
+| **研究问题** | 不同融资总量区间的初创公司，成功退出率如何变化？是否存在一个退出率最高的"最优区间"，超过后增幅放缓？ |
+| **预期结果** | 退出率先升后平（边际递减），中等融资区间表现最优 |
 
----
-
-**Sub-RQ 1b [Priority I]**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Avg_Funding_Per_Round`（等频分箱 `pd.qcut`, 5 bins）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Continuous Float → Quantile Binning → Binary → 分组条件概率 P(Exit=1 \| Density Bin) |
-| **子研究问题** | 每轮平均融资额（资本密度 Capital Density）的高低是否比融资总量更能区分成功退出与未退出公司？即：控制融资总量后，单轮押注更大的公司退出率是否更高？ |
-| **可执行步骤** | `df['density_bin'] = pd.qcut(df['avg_funding_per_round'], 5)` → `df.groupby('density_bin')['exit_success'].mean()` → 与 Sub-RQ 1a 结果并列对比 |
-
----
-
-**Sub-RQ 1c [Priority I]**
+#### RQ2：融了几轮？— 融资轮次与退出概率的门槛效应
 
 | 项目 | 内容 |
 |------|------|
-| **选定变量** | X = `Avg_Time_Between_Rounds`（分箱：<6m / 6-12m / 12-24m / 24-48m / >48m）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Continuous Float (月) → Binning → Binary → 分组条件概率 P(Exit=1 \| Speed Bin) |
-| **子研究问题** | 融资间隔越短（即资本迭代越快）的公司，其成功退出概率是否越高？是否存在一个最优融资节奏区间 (Optimal Pacing Window)？ |
-| **可执行步骤** | `pd.cut(df['avg_time_between_rounds'], bins=[0,6,12,24,48,np.inf], labels=['<6m','6-12m','12-24m','24-48m','>48m'])` → `groupby` 计算退出率 → `px.bar()` |
+| **维度** | Milestones（资本进程） |
+| **变量** | X = `Funding_Rounds`（Discrete Integer, 1–10+）；Y = `Exit_Success`（Binary 0/1） |
+| **统计方法** | `groupby` → 逐轮条件概率 → 一阶差分 `.diff()` 定位门槛 |
+| **研究问题** | 成功退出率是否在某一特定轮次后出现显著跳跃？该"门槛轮次"是第几轮？ |
+| **预期结果** | 第 3–4 轮（约 Series B）处出现退出率跃升，之后趋于平稳 |
 
----
-
-**Sub-RQ 1d [Priority II]**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Time_to_First_Funding`（分箱：<6m / 6-12m / 1-2y / 2-5y / >5y）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Continuous Float (月) → Binning → Binary → 分组条件概率 P(Exit=1 \| First Funding Speed Bin) |
-| **子研究问题** | 从成立到获得首轮融资的时间越短的公司，是否更可能成功退出？即「被资本市场快速发现」是否是成功退出的前置信号 (Leading Indicator)？ |
-| **可执行步骤** | `pd.cut(df['time_to_first_funding'], bins=[0,6,12,24,60,np.inf])` → `groupby` 计算退出率 |
-
----
-
-#### 统计路径 B：Discrete / Ordinal X → Binary Y — 非线性门槛分析 (Non-linear Threshold Analysis)
-
-**路径逻辑：** 离散型或有序分类型自变量天然形成阶梯结构，逐级计算 P(Y=1|X=k)，检验因变量是否在某个阈值处出现跳跃式变化 (Step Change)。通过一阶差分 (First-order Difference) 定位斜率突变点。
-
----
-
-**Sub-RQ 2a [Priority I]** — *对应原 RQ2*
+#### RQ3：融资多快？— 融资节奏与退出概率
 
 | 项目 | 内容 |
 |------|------|
-| **选定变量** | X = `Funding_Rounds`（Discrete Integer, 1–10+）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Discrete Integer → Binary → 逐级条件概率序列 → 一阶差分 → 门槛识别 |
-| **子研究问题** | 初创公司的成功退出概率是否在到达某一特定融资轮次后出现显著跳跃 (Threshold Effect)？若存在门槛，该临界轮次为第几轮？门槛前后的退出率差异幅度 (Δ) 有多大？ |
-| **可执行步骤** | `exit_by_round = df.groupby('funding_rounds')['exit_success'].agg(['mean','count'])` → `px.line(x='funding_rounds', y='mean', markers=True)` → 计算 `exit_by_round['mean'].diff()` 定位最大跳跃点 |
-
----
-
-**Sub-RQ 2b [Priority I]**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Last_Round_Type`（Ordinal: Seed < A < B < C < D+ < PE，按 `last_round_type_rank` 排序）；Y = `Exit_Success`（Binary 0/1） |
-| **统计路径** | Ordinal Categorical → Binary → 有序分组条件概率 |
-| **子研究问题** | 最后一轮融资类型越高阶（从 Seed 到 PE）的公司，成功退出率是否单调递增？轮次**质量**（最高到达阶段 `Last_Round_Type`）与轮次**数量** (`Funding_Rounds`) 哪个对退出概率的区分度更强？ |
-| **可执行步骤** | `df.groupby('last_round_type')['exit_success'].mean().reindex(round_order_list)` → `px.bar()` → 与 Sub-RQ 2a 折线图并列对比区分度 |
-
----
-
-#### 统计路径 C：Ordinal X → Nominal Y — 交叉列联分析 (Cross-Tabulation & Distribution Shift)
-
-**路径逻辑：** 当因变量为多分类（非二元）时，使用交叉列联表 (Contingency Table) 分析各类别的占比如何随有序自变量系统性变化，揭示结构性组成的迁移方向。
-
----
-
-**Sub-RQ 3 [Priority I]**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Last_Round_Type`（Ordinal）；Y = `Operating_Status`（Nominal: IPO / Acquired / Operating / Closed） |
-| **统计路径** | Ordinal → Nominal (4-class) → 交叉列联表 → 行归一化比例 (Row-normalized Proportions) |
-| **子研究问题** | 随着最后一轮融资类型从 Seed 递进至 PE，公司终局状态的**结构性组成**如何变化？具体而言：(a) `Closed` 占比是否单调下降？(b) `IPO` 与 `Acquired` 的相对比例是否在特定轮次类型后发生反转（即更高轮次更倾向 IPO 而非被收购）？ |
-| **可执行步骤** | `ct = pd.crosstab(df['last_round_type'], df['status'], normalize='index')` → `px.bar(ct.reset_index(), x='last_round_type', y=['ipo','acquired','operating','closed'], barmode='stack')` |
-
----
-
-#### 统计路径 D：Continuous X → Continuous Y — 相关性与趋势分析 (Correlation & Scatter Trend Analysis)
-
-**路径逻辑：** 两个连续型变量之间的关联强度和方向，通过散点图 + OLS 趋势线可视化，辅以 **Spearman 秩相关系数**（适用于非正态分布的 VC 数据）量化。Y 轴通常需要对数变换以应对极端右偏分布。
-
----
-
-**Sub-RQ 4a [Priority I]** — *对应原 RQ3*
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Avg_Time_Between_Rounds`（Continuous, 月）；Y = `Acquisition_Price`（Continuous, USD）；**子集限制** = `status == 'acquired'` 且 `acquisition_price > 0` |
-| **统计路径** | Continuous → Continuous → Spearman ρ + OLS Trendline（Y 轴 log 变换） |
-| **子研究问题** | 在已被收购的公司中，融资间隔 (`Avg_Time_Between_Rounds`) 与收购价格 (`Acquisition_Price`) 之间是否存在显著的单调关联 (Spearman ρ, p < 0.05)？融资节奏越快的公司是否倾向于获得更高的收购对价？ |
-| **可执行步骤** | `from scipy.stats import spearmanr` → `spearmanr(df_acq['avg_time_between_rounds'], df_acq['acquisition_price'])` → `px.scatter(log_y=True, trendline='ols', hover_data=['name'])` |
-
----
-
-**Sub-RQ 4b [Priority I] — 资本效率 (Capital Efficiency)**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Total_Funding_USD`（分箱为 `funding_bracket`）；Y = `Valuation_to_Funding_Ratio`（Continuous）；**子集限制** = `valuation_to_funding_ratio > 0` |
-| **统计路径** | Continuous (binned) → Continuous → 分组中位数对比 (Group Median Comparison) |
-| **子研究问题** | 融资总量越高的公司，其资本效率（`Post_Money_Valuation / Total_Funding_USD`）是否越低？即是否存在**资本稀释效应 (Capital Dilution Effect)** ——融资越多，每一美元创造的估值倍数反而下降？ |
-| **可执行步骤** | `df_valued.groupby('funding_bracket')['valuation_to_funding_ratio'].median()` → `px.bar(title='Capital Efficiency by Funding Bracket')` → 观察是否呈递减趋势 |
-
----
-
-#### 统计路径 E：Binary X → Binary Y — 列联表与优势比 (Contingency Table & Odds Ratio)
-
-**路径逻辑：** 两个二元变量之间的关联通过 2×2 列联表量化，计算优势比 (Odds Ratio) 衡量效应大小，Fisher's Exact Test 评估统计显著性（适用于小样本）。
-
----
-
-**Sub-RQ 5 [Priority II]**
-
-| 项目 | 内容 |
-|------|------|
-| **选定变量** | X = `Has_PE_Round`（Binary: 0/1）；Y = `Exit_Success`（Binary: 0/1） |
-| **统计路径** | Binary → Binary → 2×2 Contingency Table → Odds Ratio + Fisher's Exact Test |
-| **子研究问题** | 经历过 Private Equity 轮次的公司，其成功退出的优势比 (Odds Ratio) 相对于未经历 PE 轮的公司为多少？该关联是否具有统计显著性 (p < 0.05)？ |
-| **可执行步骤** | `ct = pd.crosstab(df['has_pe_round'], df['exit_success'])` → `from scipy.stats import fisher_exact` → `fisher_exact(ct)` → 报告 OR 值和 p 值 |
-
----
-
-> **Sub-RQ 与原 RQ 对应关系：** Sub-RQ 1a ≈ 原 RQ1；Sub-RQ 2a ≈ 原 RQ2；Sub-RQ 4a ≈ 原 RQ3。新增 Sub-RQ 1b/1c/1d/2b/3/4b/5 为基于数据类型逻辑链系统推导的补充路径。Step 5 中的分析代码结构将与本节 Sub-RQ 编号对齐。
+| **维度** | Velocity（资本速度） |
+| **变量** | X = `Avg_Time_Between_Rounds`（分箱：<6m / 6-12m / 12-24m / 24-48m / >48m）；Y = `Exit_Success`（Binary 0/1） |
+| **统计方法** | `pd.cut` → `groupby` → 条件概率 P(Exit=1 \| Speed Bin) |
+| **研究问题** | 融资间隔越短（迭代越快）的公司，退出率是否越高？是否存在一个最优融资节奏区间？ |
+| **预期结果** | 间隔 6-24 个月的公司退出率最高；太快（<6m）或太慢（>48m）都不利 |
 
 ### 1.5 变量关系与预期假设 (Hypothesized Relationships)
 
-| Sub-RQ | 统计路径 | 自变量 (X) | 因变量 (Y) | 预期关系 | 可视化方案 |
-|:------:|---------|-----------|-----------|---------|-----------|
-| 1a [I] | Cont.(binned) → Binary | `Total_Funding_USD` (bracket) | `Exit_Success` | 正相关 + 边际递减：退出率先升后平，存在甜蜜点 | `px.bar` 柱状图 |
-| 1b [I] | Cont.(qcut) → Binary | `Avg_Funding_Per_Round` (quintile) | `Exit_Success` | 资本密度越高退出率越高，可能比总量有更强区分度 | `px.bar` 柱状图 |
-| 1c [I] | Cont.(binned) → Binary | `Avg_Time_Between_Rounds` (bin) | `Exit_Success` | 间隔越短退出率越高，但极短间隔（<6m）可能例外 | `px.bar` 柱状图 |
-| 1d [II] | Cont.(binned) → Binary | `Time_to_First_Funding` (bin) | `Exit_Success` | 首轮融资越快退出率越高 | `px.bar` 柱状图 |
-| 2a [I] | Discrete → Binary | `Funding_Rounds` | `Exit_Success` | 非线性跳跃：B 轮（~第 3 轮）后退出率跃升 | `px.line(markers=True)` 折线图 |
-| 2b [I] | Ordinal → Binary | `Last_Round_Type` (ranked) | `Exit_Success` | 单调递增：轮次质量越高退出率越高 | `px.bar` 有序柱状图 |
-| 3 [I] | Ordinal → Nominal | `Last_Round_Type` | `Operating_Status` (4-class) | Closed 占比递减；IPO 占比在 C+ 后显著上升 | `px.bar(barmode='stack')` 堆叠柱状图 |
-| 4a [I] | Cont. → Cont. | `Avg_Time_Between_Rounds` | `Acquisition_Price` | 负相关 (Spearman ρ < 0)：节奏越快收购价越高 | `px.scatter(trendline='ols', log_y=True)` |
-| 4b [I] | Cont.(binned) → Cont. | `Total_Funding_USD` (bracket) | `Valuation_to_Funding_Ratio` | 资本稀释效应：中等融资区间资本效率最高 | `px.bar` 中位数柱状图 |
-| 5 [II] | Binary → Binary | `Has_PE_Round` | `Exit_Success` | OR > 1：PE 轮公司退出率显著更高 | 2×2 列联表 + `px.bar` |
+| RQ | 维度 | 自变量 (X) | 因变量 (Y) | 预期关系 | 图表类型 |
+|:---:|:---:|-----------|-----------|---------|---------|
+| **RQ1** | Volume | `Total_Funding_USD` (bracket) | `Exit_Success` | 先升后平：边际递减效应 | **Fig 2**: 双轴柱状图 + 折线 |
+| **RQ2** | Milestones | `Funding_Rounds` | `Exit_Success` | 非线性跳跃：门槛轮次后退出率骤升 | **Fig 3**: 气泡散点图 + 门槛标注 |
+| **RQ3** | Velocity | `Avg_Time_Between_Rounds` (bin) | `Exit_Success` | 倒 U 型：中等节奏最优 | **Fig 4**: 交叉热力图 |
+
+> **Fig 1**（EDA 概览）为描述性统计图，不对应特定 RQ，用于建立数据集的基础认知。
 
 ---
 
@@ -646,408 +504,325 @@ fig.show()
 
 ---
 
-## Step 5: 深度分析与建模 (In-depth Analysis & Modeling)
+## Step 5: 核心分析与可视化 (Core Analysis & Visualization)
 
-> ⚠️ **策略原则：** 本项目面向 Data Scholarship 课程，听众包括非统计背景的同学和评委。因此我们采用 **「描述性统计 + 分组对比 + 可视化叙事」** 的路线，避免使用复杂的机器学习模型。所有发现都必须能用**一句话 + 一张图**向非专业听众解释清楚。
->
-> **组织说明：** 本节按 1.4 节定义的统计路径 (A–E) 组织，每个子节对应一个或一组 Sub-RQ。
+> **策略：** 4 张图 = 1 EDA 概览 + 3 RQ 分析。每张图使用**不同的图表类型和包**，展示 learning outcomes 的广度。**全部 4 张图写入 Reflection**；从中选 **Fig 2 + Fig 3** 在 Presentation 中讲解（最易口头阐述、视觉冲击最强）。
 
-### 5.1 路径 A 分析：概率分布映射 (Sub-RQ 1a–1d)
+| Fig | 对应 | 图表类型 | 包 | 技能展示 |
+|:---:|:---:|---------|:---:|---------|
+| **Fig 1** | EDA 概览 | Subplots（Histogram + Pie） | `plotly.subplots` + `plotly.graph_objects` | Plotly 底层 API、多图布局 |
+| **Fig 2** | RQ1 | 双轴 Bar + Line | `plotly.graph_objects` + `make_subplots` | 双 Y 轴、参考线、标注 |
+| **Fig 3** | RQ2 | 气泡散点图 + 区域标注 | `plotly.express` | size/color 映射、`add_vline`/`add_vrect` |
+| **Fig 4** | RQ3 | 带标注热力图 | `seaborn` + `matplotlib` | `pivot_table`、`sns.heatmap(annot=True)` |
 
-**统计路径：** Continuous X (binned) → Binary Y → P(Exit=1 | Bin)
+---
 
-#### Sub-RQ 1a：融资总量 × 退出概率
+### 5.1 Fig 1 — EDA 概览（Plotly Subplots）
+
+**目的：** 建立数据集的基础认知——融资总量的分布形态 + 公司状态的基线比例。
 
 ```python
-# 计算每个融资区间的成功退出率
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+import numpy as np
+
+# ============================================================
+# Fig 1: Subplots — 左: 融资分布直方图, 右: 状态饼图
+# ============================================================
+fig = make_subplots(
+    rows=1, cols=2,
+    specs=[[{"type": "histogram"}, {"type": "pie"}]],
+    subplot_titles=["Total Funding Distribution (Log Scale)", "Company Status Breakdown"],
+    column_widths=[0.6, 0.4]
+)
+
+# 左图：按状态着色的对数直方图
+colors = {'operating': '#95a5a6', 'acquired': '#3498db', 'ipo': '#2ecc71', 'closed': '#e74c3c'}
+for status in ['operating', 'acquired', 'ipo', 'closed']:
+    sub = df[df['status'] == status]
+    fig.add_trace(
+        go.Histogram(x=np.log10(sub['funding_total_usd']),
+                     name=status.capitalize(), marker_color=colors[status],
+                     opacity=0.7, nbinsx=30),
+        row=1, col=1
+    )
+
+# 右图：状态饼图
+counts = df['status'].value_counts()
+fig.add_trace(
+    go.Pie(labels=[s.capitalize() for s in counts.index],
+           values=counts.values,
+           marker_colors=[colors[s] for s in counts.index],
+           textinfo='label+percent'),
+    row=1, col=2
+)
+
+fig.update_layout(
+    title_text="Fig 1: Dataset Overview — Funding Distribution & Status Composition",
+    height=450, showlegend=True,
+    legend=dict(orientation='h', yanchor='bottom', y=-0.2)
+)
+fig.update_xaxes(title_text="log₁₀(Total Funding USD)", row=1, col=1)
+fig.update_yaxes(title_text="Count", row=1, col=1)
+fig.show()
+```
+
+**一句话结论：** "数据集中 X% 的公司成功退出（IPO + Acquired），融资总量呈对数正态分布。"
+
+---
+
+### 5.2 Fig 2 — RQ1 融资总量与退出率（双轴 Bar + Line）
+
+**目的：** 回答"融了多少钱影响成功率吗？"——用双轴同时展示退出率（主轴）和样本量（副轴），避免少样本区间误导。
+
+```python
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+
+# ============================================================
+# 数据准备
+# ============================================================
 exit_by_bracket = (
-    df.groupby('funding_bracket')['exit_success']
+    df.groupby('funding_bracket', observed=True)['exit_success']
     .agg(['mean', 'count'])
     .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
     .reset_index()
 )
 
-fig = px.bar(
-    exit_by_bracket, x='funding_bracket', y='exit_rate',
-    text='n_companies',
-    title='Sub-RQ 1a: Exit Rate by Funding Bracket',
-    labels={'exit_rate': 'P(Exit Success)', 'funding_bracket': 'Total Funding Bracket'}
+overall_rate = df['exit_success'].mean()
+
+# ============================================================
+# Fig 2: 双轴 — 柱状图(退出率) + 折线图(样本量)
+# ============================================================
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+# 主轴：退出率柱状图
+fig.add_trace(
+    go.Bar(x=exit_by_bracket['funding_bracket'],
+           y=exit_by_bracket['exit_rate'],
+           name='Exit Rate',
+           marker_color='#3498db',
+           text=[f"{r:.1%}" for r in exit_by_bracket['exit_rate']],
+           textposition='outside'),
+    secondary_y=False
 )
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
+
+# 副轴：样本量折线
+fig.add_trace(
+    go.Scatter(x=exit_by_bracket['funding_bracket'],
+               y=exit_by_bracket['n_companies'],
+               name='Sample Size (n)',
+               mode='lines+markers',
+               line=dict(color='#e74c3c', dash='dot', width=2),
+               marker=dict(size=8)),
+    secondary_y=True
+)
+
+# 水平参考线：全局平均退出率
+fig.add_hline(y=overall_rate, line_dash='dash', line_color='gray',
+              annotation_text=f"Overall avg: {overall_rate:.1%}",
+              secondary_y=False)
+
+# 峰值标注
+peak_idx = exit_by_bracket['exit_rate'].idxmax()
+peak = exit_by_bracket.iloc[peak_idx]
+fig.add_annotation(
+    x=peak['funding_bracket'], y=peak['exit_rate'],
+    text=f"Peak: {peak['exit_rate']:.1%}",
+    showarrow=True, arrowhead=2, ax=0, ay=-30,
+    font=dict(color='#2c3e50', size=12)
+)
+
+fig.update_layout(
+    title_text="Fig 2 (RQ1): Exit Success Rate by Total Funding Bracket",
+    height=500, legend=dict(orientation='h', yanchor='bottom', y=-0.2)
+)
+fig.update_yaxes(title_text="Exit Success Rate", tickformat='.0%', secondary_y=False)
+fig.update_yaxes(title_text="Number of Companies", secondary_y=True)
 fig.show()
 ```
 
-**关注点：** 观察是否存在**边际递减效应 (Diminishing Marginal Returns)** ——退出率在中等融资区间达到峰值后增幅放缓或下降。
+**一句话结论：** "融资在 [X–Y] 区间的公司退出率最高 (Z%)，超过该区间后退出率增幅放缓——不是越多越好。"
 
-#### Sub-RQ 1b：资本密度 × 退出概率
+---
 
-```python
-# 等频分箱：资本密度（每轮平均融资额）
-df['density_bin'] = pd.qcut(
-    df['avg_funding_per_round'].dropna(), 5,
-    labels=['Q1 (lowest)', 'Q2', 'Q3', 'Q4', 'Q5 (highest)']
-)
+### 5.3 Fig 3 — RQ2 融资轮次门槛效应（Scatter + 门槛标注）
 
-exit_by_density = (
-    df.groupby('density_bin')['exit_success']
-    .agg(['mean', 'count'])
-    .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
-    .reset_index()
-)
-
-fig = px.bar(
-    exit_by_density, x='density_bin', y='exit_rate',
-    text='n_companies',
-    title='Sub-RQ 1b: Exit Rate by Capital Density (Avg Funding Per Round)',
-    labels={'exit_rate': 'P(Exit Success)', 'density_bin': 'Capital Density Quintile'}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
-```
-
-**关注点：** 与 Sub-RQ 1a 对比——资本密度 (单轮押注大小) 是否比融资总量有更强的退出区分度。
-
-#### Sub-RQ 1c：融资节奏 × 退出概率
+**目的：** 回答"第几轮是分水岭？"——用气泡大小编码样本量，颜色编码退出率，垂直线+区域标注门槛位置。
 
 ```python
-# 分箱：融资间隔
-df['speed_bin'] = pd.cut(
-    df['avg_time_between_rounds'],
-    bins=[0, 6, 12, 24, 48, np.inf],
-    labels=['<6m', '6-12m', '12-24m', '24-48m', '>48m']
-)
+import plotly.express as px
 
-exit_by_speed = (
-    df.groupby('speed_bin')['exit_success']
-    .agg(['mean', 'count'])
-    .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
-    .reset_index()
-)
-
-fig = px.bar(
-    exit_by_speed, x='speed_bin', y='exit_rate',
-    text='n_companies',
-    title='Sub-RQ 1c: Exit Rate by Funding Velocity',
-    labels={'exit_rate': 'P(Exit Success)', 'speed_bin': 'Avg Time Between Rounds'}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
-```
-
-**关注点：** 是否存在一个**最优融资节奏区间 (Optimal Pacing Window)**——过快和过慢都不利于退出。
-
-#### Sub-RQ 1d [Priority II]：首轮融资速度 × 退出概率
-
-```python
-# 分箱：从成立到首轮融资的时间
-df['first_funding_speed'] = pd.cut(
-    df['time_to_first_funding'],
-    bins=[0, 6, 12, 24, 60, np.inf],
-    labels=['<6m', '6-12m', '1-2y', '2-5y', '>5y']
-)
-
-exit_by_first = (
-    df.groupby('first_funding_speed')['exit_success']
-    .agg(['mean', 'count'])
-    .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
-    .reset_index()
-)
-
-fig = px.bar(
-    exit_by_first, x='first_funding_speed', y='exit_rate',
-    text='n_companies',
-    title='Sub-RQ 1d [II]: Exit Rate by Time to First Funding',
-    labels={'exit_rate': 'P(Exit Success)', 'first_funding_speed': 'Time to First Funding'}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
-```
-
-### 5.2 路径 B 分析：非线性门槛分析 (Sub-RQ 2a–2b)
-
-**统计路径：** Discrete / Ordinal X → Binary Y → 逐级条件概率 → 门槛识别
-
-#### Sub-RQ 2a：融资轮次数 × 退出概率（门槛效应）
-
-```python
-# 逐轮退出率
+# ============================================================
+# 数据准备
+# ============================================================
 exit_by_round = (
     df.groupby('funding_rounds')['exit_success']
     .agg(['mean', 'count'])
     .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
     .reset_index()
 )
-
-# 仅保留样本量 ≥ 30 的轮次
 exit_by_round = exit_by_round[exit_by_round['n_companies'] >= 30]
 
-# 一阶差分：定位最大跳跃点
+# 一阶差分定位门槛
 exit_by_round['delta'] = exit_by_round['exit_rate'].diff()
-threshold_round = exit_by_round.loc[exit_by_round['delta'].idxmax(), 'funding_rounds']
-print(f"门槛轮次 (Δ最大): 第 {threshold_round} 轮")
+threshold_round = int(exit_by_round.loc[exit_by_round['delta'].idxmax(), 'funding_rounds'])
 
-fig = px.line(
-    exit_by_round, x='funding_rounds', y='exit_rate',
-    markers=True, text='n_companies',
-    title=f'Sub-RQ 2a: Exit Rate by Funding Rounds (Threshold @ Round {threshold_round})',
-    labels={'exit_rate': 'P(Exit Success)', 'funding_rounds': 'Number of Funding Rounds'}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='top center')
-fig.add_vline(x=threshold_round, line_dash='dash', line_color='red',
-              annotation_text=f'Threshold: Round {threshold_round}')
-fig.show()
-```
-
-**关注点：** 寻找退出率**一阶差分 (Δ) 最大处**——即曲线上的门槛轮次。
-
-#### Sub-RQ 2b：轮次质量 × 退出概率
-
-```python
-# 按 Last_Round_Type 的有序排列计算退出率
-round_order_list = ['angel', 'seed', 'venture', 'series-a', 'series-b', 'series-c+', 'private_equity']
-
-exit_by_type = (
-    df.groupby('last_round_type')['exit_success']
-    .agg(['mean', 'count'])
-    .rename(columns={'mean': 'exit_rate', 'count': 'n_companies'})
-    .reset_index()
-)
-exit_by_type['last_round_type'] = pd.Categorical(
-    exit_by_type['last_round_type'], categories=round_order_list, ordered=True
-)
-exit_by_type = exit_by_type.sort_values('last_round_type').dropna(subset=['last_round_type'])
-
-fig = px.bar(
-    exit_by_type, x='last_round_type', y='exit_rate',
-    text='n_companies',
-    title='Sub-RQ 2b: Exit Rate by Last Round Type (Quality Threshold)',
-    labels={'exit_rate': 'P(Exit Success)', 'last_round_type': 'Last Funding Round Type'}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
-```
-
-**关注点：** 将 Sub-RQ 2a（轮次**数量**）与 Sub-RQ 2b（轮次**质量**）并列对比，判断哪个维度的退出区分度更强。
-
-### 5.3 路径 C 分析：交叉列联分析 (Sub-RQ 3)
-
-**统计路径：** Ordinal X → Nominal Y (4-class) → 交叉列联表 → 行归一化比例
-
-```python
-# 交叉列联表：Last_Round_Type × Operating_Status
-ct = pd.crosstab(df['last_round_type'], df['status'], normalize='index')
-ct = ct.reindex(round_order_list).dropna()
-
-# 堆叠柱状图
-ct_plot = ct.reset_index().melt(id_vars='last_round_type', var_name='status', value_name='proportion')
-fig = px.bar(
-    ct_plot, x='last_round_type', y='proportion', color='status',
-    barmode='stack',
-    title='Sub-RQ 3: Status Composition by Last Round Type',
-    labels={'proportion': 'Proportion', 'last_round_type': 'Last Funding Round Type'},
-    color_discrete_map={'ipo': '#2ecc71', 'acquired': '#3498db', 'operating': '#95a5a6', 'closed': '#e74c3c'}
-)
-fig.show()
-
-# 输出数值表
-print(ct.round(3))
-```
-
-**关注点：** (a) `Closed` 占比是否随轮次类型递进而单调下降？(b) `IPO` 与 `Acquired` 的相对比例是否在某一轮次类型后发生**反转**（即更高轮次更倾向 IPO 而非被收购）？
-
-### 5.4 路径 D 分析：相关性与趋势分析 (Sub-RQ 4a–4b)
-
-**统计路径：** Continuous X → Continuous Y → Spearman ρ / Group Median Comparison
-
-#### Sub-RQ 4a：融资节奏 × 收购价格
-
-```python
-from scipy.stats import spearmanr
-
-# 筛选已被收购且有价格数据的公司
-df_acquired = df[
-    (df['status'] == 'acquired') &
-    (df['acquisition_price'].notna()) &
-    (df['acquisition_price'] > 0) &
-    (df['avg_time_between_rounds'].notna())
-].copy()
-print(f"有效样本量: {len(df_acquired)}")
-
-# Spearman 秩相关系数
-rho, p_val = spearmanr(df_acquired['avg_time_between_rounds'], df_acquired['acquisition_price'])
-print(f"Spearman ρ = {rho:.3f}, p = {p_val:.4f}")
-
-# 散点图 + OLS 趋势线
+# ============================================================
+# Fig 3: 气泡散点 + 门槛区域标注
+# ============================================================
 fig = px.scatter(
-    df_acquired,
-    x='avg_time_between_rounds', y='acquisition_price',
-    log_y=True, trendline='ols',
-    hover_data=['name'],
-    title=f'Sub-RQ 4a: Funding Velocity vs Acquisition Price (ρ={rho:.3f}, p={p_val:.4f})',
-    labels={
-        'avg_time_between_rounds': 'Avg Time Between Rounds (Months)',
-        'acquisition_price': 'Acquisition Price (USD, Log Scale)'
-    }
+    exit_by_round, x='funding_rounds', y='exit_rate',
+    size='n_companies', color='exit_rate',
+    color_continuous_scale='RdYlGn',
+    size_max=40,
+    title=f"Fig 3 (RQ2): Exit Rate by Funding Rounds — Threshold at Round {threshold_round}",
+    labels={'exit_rate': 'Exit Success Rate', 'funding_rounds': 'Number of Funding Rounds',
+            'n_companies': 'Sample Size'}
 )
+
+# 门槛左侧灰色区域
+fig.add_vrect(x0=0.5, x1=threshold_round - 0.5,
+              fillcolor='gray', opacity=0.08,
+              annotation_text='Below Threshold', annotation_position='top left')
+
+# 门槛右侧绿色区域
+fig.add_vrect(x0=threshold_round - 0.5, x1=exit_by_round['funding_rounds'].max() + 0.5,
+              fillcolor='green', opacity=0.05,
+              annotation_text='Above Threshold', annotation_position='top right')
+
+# 门槛垂直线
+fig.add_vline(x=threshold_round, line_dash='dash', line_color='red', line_width=2)
+
+fig.update_layout(height=500)
+fig.update_yaxes(tickformat='.0%')
 fig.show()
+
+print(f"门槛轮次: 第 {threshold_round} 轮 (Δ = {exit_by_round.loc[exit_by_round['delta'].idxmax(), 'delta']:.1%})")
 ```
 
-**关注点：** `acquisitions.csv` 中 `price_amount` 大量为 0（未披露），已在 3.5 中替换为 NaN。实际可用样本量可能有限，**需在图表标题或脚注中报告 n 值和 p 值**。
+**一句话结论：** "第 N 轮是分水岭——退出率从该轮前的 X% 跃升至 Y%，增幅达 Z 个百分点。"
 
-#### Sub-RQ 4b：资本效率分析 (Capital Efficiency)
+---
+
+### 5.4 Fig 4 — RQ3 融资速度交叉分析（Seaborn Heatmap）
+
+**目的：** 回答"融资间隔多长最好？"——同时交叉 RQ1 的融资区间维度，用热力图展示二维交互效应。
 
 ```python
-# 筛选有估值数据的公司
-df_valued = df[df['valuation_to_funding_ratio'].notna() & (df['valuation_to_funding_ratio'] > 0)].copy()
-print(f"有估值数据的公司: {len(df_valued)}")
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# 按融资区间计算资本效率中位数
-efficiency_by_bracket = (
-    df_valued.groupby('funding_bracket')['valuation_to_funding_ratio']
-    .agg(['median', 'count'])
-    .rename(columns={'median': 'median_ratio', 'count': 'n_companies'})
-    .reset_index()
+# ============================================================
+# 数据准备：分箱融资速度
+# ============================================================
+df['speed_bin'] = pd.cut(
+    df['avg_time_between_rounds'],
+    bins=[0, 6, 12, 24, 48, np.inf],
+    labels=['<6m', '6-12m', '12-24m', '24-48m', '>48m']
 )
 
-fig = px.bar(
-    efficiency_by_bracket, x='funding_bracket', y='median_ratio',
-    text='n_companies',
-    title='Sub-RQ 4b: Capital Efficiency (Valuation/Funding) by Bracket',
-    labels={'median_ratio': 'Median Valuation-to-Funding Ratio', 'funding_bracket': 'Total Funding Bracket'}
+# 交叉透视表：融资区间 × 融资速度 → 退出率
+heatmap_data = df.pivot_table(
+    index='funding_bracket',
+    columns='speed_bin',
+    values='exit_success',
+    aggfunc='mean'
 )
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
+
+# 样本量表（用于标注）
+count_data = df.pivot_table(
+    index='funding_bracket',
+    columns='speed_bin',
+    values='exit_success',
+    aggfunc='count'
+).fillna(0).astype(int)
+
+# ============================================================
+# Fig 4: Seaborn 带标注热力图
+# ============================================================
+plt.figure(figsize=(10, 6))
+
+# 构造标注文本：退出率 + 样本量
+annot_text = heatmap_data.copy()
+for i in range(heatmap_data.shape[0]):
+    for j in range(heatmap_data.shape[1]):
+        rate = heatmap_data.iloc[i, j]
+        n = count_data.iloc[i, j]
+        if pd.notna(rate):
+            annot_text.iloc[i, j] = f"{rate:.1%}\n(n={n})"
+        else:
+            annot_text.iloc[i, j] = "—"
+
+ax = sns.heatmap(
+    heatmap_data, annot=annot_text.values, fmt='',
+    cmap='RdYlGn', linewidths=0.5,
+    vmin=0, vmax=heatmap_data.max().max(),
+    cbar_kws={'label': 'Exit Success Rate', 'format': '%.0%%'}
+)
+
+plt.title("Fig 4 (RQ3): Exit Rate by Funding Speed × Funding Amount", fontsize=13, pad=15)
+plt.xlabel("Avg Time Between Rounds", fontsize=11)
+plt.ylabel("Total Funding Bracket", fontsize=11)
+plt.tight_layout()
+plt.show()
 ```
 
-**关注点：** 是否呈现**资本稀释效应 (Capital Dilution Effect)**——中等融资区间的资本效率最高，超大融资反而效率下降。
+**一句话结论：** "融资间隔在 6-24 个月的公司退出率最高；该规律在不同融资区间中保持一致。"
 
-### 5.5 路径 E 分析：列联表与优势比 (Sub-RQ 5) [Priority II]
-
-**统计路径：** Binary X → Binary Y → 2×2 Contingency Table → Odds Ratio + Fisher's Exact Test
-
-```python
-from scipy.stats import fisher_exact
-
-# 2×2 列联表
-ct_pe = pd.crosstab(df['has_pe_round'], df['exit_success'])
-print("2×2 Contingency Table:")
-print(ct_pe)
-
-# Fisher's Exact Test
-odds_ratio, p_val = fisher_exact(ct_pe)
-print(f"\nOdds Ratio = {odds_ratio:.2f}, p = {p_val:.4f}")
-
-# 可视化
-pe_exit = df.groupby('has_pe_round')['exit_success'].agg(['mean', 'count']).reset_index()
-pe_exit['has_pe_round'] = pe_exit['has_pe_round'].map({0: 'No PE Round', 1: 'Has PE Round'})
-
-fig = px.bar(
-    pe_exit, x='has_pe_round', y='mean', text='count',
-    title=f'Sub-RQ 5 [II]: PE Round vs Exit Success (OR={odds_ratio:.2f}, p={p_val:.4f})',
-    labels={'mean': 'P(Exit Success)', 'has_pe_round': ''}
-)
-fig.update_traces(texttemplate='n=%{text}', textposition='outside')
-fig.show()
-```
-
-### 5.6 控制变量稳健性检验 (Robustness Check)
-
-在核心 Sub-RQ 分析完成后，用 1.4 节声明的控制变量做分层验证：
-
-```python
-# ============================================================
-# 稳健性检验 1：按行业分层验证 Sub-RQ 1a
-# ============================================================
-top_categories = df['category_code'].value_counts().head(5).index.tolist()
-df_top = df[df['category_code'].isin(top_categories)]
-
-stratified_1a = (
-    df_top.groupby(['funding_bracket', 'category_code'])['exit_success']
-    .mean()
-    .unstack()
-    .round(3)
-)
-print("Sub-RQ 1a 行业分层验证:")
-print(stratified_1a)
-
-# ============================================================
-# 稳健性检验 2：按地域分层验证 Sub-RQ 2a
-# ============================================================
-df['region'] = np.where(df['country_code'] == 'USA', 'US', 'Non-US')
-
-stratified_2a = (
-    df.groupby(['funding_rounds', 'region'])['exit_success']
-    .mean()
-    .unstack()
-    .round(3)
-)
-print("\nSub-RQ 2a 地域分层验证:")
-print(stratified_2a[stratified_2a.index <= 10])  # 前 10 轮
-
-# 若分层后趋势一致 → 结论稳健
-# 若出现 Simpson's Paradox → 需在 Step 6 中声明
-```
-
-### 5.7 可视化增强（可选）
-
-- **Plotly Sunburst 图：** 展示 `行业 → 融资区间 → 退出状态` 的层级关系。
-- **Plotly 热力图 (Heatmap)：** 展示 `Last_Round_Type` × `Funding_Bracket` 的退出率交叉矩阵。
-- **Pyecharts 主题河流图：** 可与 Part B 协作，叠加融资轮次维度。
+**额外亮点：** 这张热力图**同时验证了 RQ1 和 RQ3**——从 Y 轴看是 RQ1（融资区间效应），从 X 轴看是 RQ3（融资速度效应），交叉位置揭示二者的交互关系。
 
 ---
 
 ## Step 6: 解读与叙事 (Interpretation & Storytelling)
 
-### 6.1 从数据到故事的转化框架
+### 6.1 Presentation 脚本
 
-Part D 是整个 Presentation 的**收尾章节（约 3-4 分钟）**，需要将前三个 Part 的发现汇聚成一个有说服力的结论。建议采用以下叙事结构：
+Part D 是你在 Group Presentation 中负责的章节（约 2.5–3 分钟）。从 4 张图中选 **Fig 2 + Fig 3** 进行口头讲解。
 
-| 时间 | 内容 | 对应 Sub-RQ | 核心图表 | 说辞模板 |
-|------|------|:----------:|---------|---------|
-| 0:00-0:30 | **引入** — 回顾前三部分的发现，提出核心问题 | — | — | "我们已经看到了资本的全球分布、赛道变迁和存活现实。那么最终的问题是：**钱花得值吗？**" |
-| 0:30-1:15 | **路径 A** — 融资总量与退出概率；叠加资本密度对比 | 1a + 1b | 并列柱状图 | "融资在 X-Y 区间的公司退出率最高，但超过 Z 后增幅放缓。有趣的是，每轮融资密度高的公司退出率也更高——**投资人的单次押注大小比总融资额更能预测成功。**" |
-| 1:15-2:00 | **路径 B+C** — 门槛效应（轮次数量 vs 质量），叠加状态组成变化 | 2a + 2b + 3 | 折线图 + 柱状图 + 堆叠柱状图 | "无论从轮次数量还是轮次质量来看，Series B 都是分水岭——退出率从 X% 跃升至 Y%，同时 Closed 占比骤降。**能走到 B 轮的公司，已经通过了市场最严格的筛选。**" |
-| 2:00-2:45 | **路径 D** — 融资节奏与收购价格 + 资本效率 | 4a + 4b | 散点图 + 中位数柱状图 | "融资节奏越快的公司，往往获得更高的收购价格 (Spearman ρ=X, p=Y)。但最深层的发现是：**融资最多的公司并非资本效率最高的公司。** 中等融资区间反而产生了最高的估值倍数。" |
-| 2:45-3:30 | **稳健性 + 总结** — 控制变量分层验证 + 一句话结论 | 5.6 | 分层对比表 | "上述结论在不同行业和地域子集中均保持一致。**资本的'转化率'比'绝对量'更值得关注——这就是 VC 机制下的资本效率悖论。**" |
+| 时间 | 内容 | 展示图 | 你说的话 |
+|------|------|:------:|---------|
+| 0:00-0:20 | **引入** | — | "前面几位同学展示了资本的全球分布和行业趋势。我来回答最后一个问题：**什么样的融资模式最可能带来成功？** 我们从三个维度来看。" |
+| 0:20-1:10 | **RQ1** | **Fig 2** | "这张图的 X 轴是融资总量区间，Y 轴是成功退出率。可以看到退出率**先升后平**——融资在 [X-Y] 区间的公司退出率最高，达到 Z%。超过这个区间后退出率不再上升。虚线是全局平均水平。**不是越多越好。**" |
+| 1:10-2:00 | **RQ2** | **Fig 3** | "接下来看融资轮次。每个气泡代表一个轮次，大小是样本量，颜色是退出率。注意**第 N 轮这条红线**——在它左边退出率很低，右边明显跃升。也就是说，**能走到第 N 轮本身就是一种市场筛选信号。**" |
+| 2:00-2:30 | **RQ3 + 总结** | — (口头) | "我们还分析了融资速度——间隔 6-24 个月的公司退出率最高，太快或太慢都不好。所以结论是：**适度的融资总量 + 足够的轮次筛选 + 合理的融资节奏**，共同指向最高的成功概率。更多细节请参考我的 Reflection。" |
 
-### 6.2 Reflection Document 写作指南
+### 6.2 Reflection 写作框架
 
-在最终的 Reflection Document 中，**Result（结果）** 和 **Discussion（讨论）** 必须严格分开：
+个人 Reflection，500-1000 词，**全部 4 张图**。建议分配：
 
-- **Result 部分：** 只陈述事实性发现，使用客观语言。
-  - ✅ "融资总量在 10M-50M 区间的公司成功退出率为 38%，高于其他区间。"
-  - ❌ "我认为融资 10M-50M 是最好的策略。"
+| 部分 | 约词数 | 内容 | 对应图 |
+|------|:------:|------|:------:|
+| **Introduction** | ~100 | 研究问题 + 数据来源简介 | — |
+| **Method** | ~200 | 数据源（Crunchbase 多表 JOIN）、筛选策略、分箱方法、工具 | Fig 1 |
+| **Result** | ~350 | RQ1 结果 + RQ2 结果 + RQ3 结果，每个约 100 词 | Fig 2, 3, 4 |
+| **Discussion** | ~200 | 解读 + 至少 2 项局限性声明 | — |
+| **References** | — | 5-10 个 | — |
 
-- **Discussion 部分：** 解读结果的含义，提出可能的解释，并**明确承认局限性**。
+> **关键提示：** Result 只陈述事实（"X 区间退出率为 38%"），Discussion 才做解读（"这可能是因为…"）。
 
-### 6.3 必须声明的统计局限性 (Statistical Limitations)
+### 6.3 统计局限性 (Statistical Limitations)
 
-| 局限性 | 英文术语 | 说明 | 建议措辞 |
-|--------|---------|------|---------|
-| **幸存者偏差** | Survivor Bias | 数据集中记录的公司已是"被看到的"，无数默默失败的公司从未进入数据库。 | "Our dataset inherently suffers from **survivor bias** — companies that failed before receiving any recorded funding are absent from our analysis." |
-| **相关非因果** | Correlation ≠ Causation | 融资总量与成功退出之间的关联可能受到第三方变量（如创始人背景、市场时机）的驱动。 | "The observed correlation between funding volume and exit success **does not imply causation**. Confounding variables such as founder experience and market timing may drive both." |
-| **数据缺失偏差** | Missing Data Bias | `acquisitions.csv` 中 `price_amount` 和 `funding_rounds.csv` 中 `post_money_valuation_usd` 大量为 0（即未披露），可用子集可能不具代表性。 | "Sub-RQ 4a 的分析仅基于 N 家有公开收购价格的公司，Sub-RQ 4b 仅基于有投后估值的子集，**样本量有限，结论需谨慎推广**。" |
-| **时间截断** | Right Censoring | `Operating` 状态的公司结局未定，将其排除或纳入都会引入偏差。 | "Companies currently in 'Operating' status represent **right-censored observations** — their final outcome is yet to be determined." |
+| 局限性 | 英文术语 | 建议 Reflection 措辞 |
+|--------|---------|---------------------|
+| **幸存者偏差** | Survivor Bias | "Our dataset suffers from survivor bias — companies that failed before receiving any funding are absent." |
+| **相关非因果** | Correlation ≠ Causation | "The correlation between funding volume and exit success does not imply causation. Confounders such as founder quality and market timing may drive both." |
+| **时间截断** | Right Censoring | "Companies in 'Operating' status represent right-censored observations whose final outcome is unknown." |
 
 ### 6.4 最终检查清单 (Final Checklist)
 
-- [ ] 所有图表都有**清晰的标题、轴标签和图例**（标题须包含 Sub-RQ 编号）
-- [ ] 每张图表都附有**一句话结论 (One-line Takeaway)**
-- [ ] 代码可复现：`.ipynb` 文件从上到下 `Restart & Run All` 无报错
-- [ ] Reflection Document 中 Result 与 Discussion 严格分离
-- [ ] 已明确声明至少两项统计局限性
-- [ ] 与队友的数据口径已对齐（`status` 分类、时间范围、地域范围）
-- [ ] **路径 A (Sub-RQ 1a–1c)** 三组柱状图已完成，观察到边际递减 / 最优区间
-- [ ] **路径 B (Sub-RQ 2a–2b)** 门槛轮次已识别（一阶差分），数量 vs 质量维度已对比
-- [ ] **路径 C (Sub-RQ 3)** 堆叠柱状图已完成，Closed 递减趋势已确认
-- [ ] **路径 D (Sub-RQ 4a–4b)** Spearman ρ 已报告，资本效率中位数柱状图已完成
-- [ ] **路径 E (Sub-RQ 5)** [可选] Odds Ratio 已计算
-- [ ] **稳健性检验 (5.6)** 至少完成 1 项控制变量分层验证（`category_code` 或 `country_code`）
-- [ ] Priority II 变量 (1d, 5) 已检查数据可得性，可用者已纳入补充分析
-- [ ] `Valuation_to_Funding_Ratio`（资本效率）已作为 Presentation 收尾洞察呈现
+- [ ] **Fig 1** (Subplots): 直方图 + 饼图双图合一，标题/轴标签完整
+- [ ] **Fig 2** (双轴 Bar+Line): 退出率柱 + 样本量线 + 参考线 + 峰值标注
+- [ ] **Fig 3** (气泡散点): size=样本量, color=退出率, 门槛区域标注
+- [ ] **Fig 4** (Heatmap): `pivot_table` 交叉表 + `annot=True` + colorbar
+- [ ] 每张图有**一句话结论 (One-line Takeaway)**
+- [ ] 代码可复现：`.ipynb` 从上到下 `Restart & Run All` 无报错
+- [ ] Reflection: 500-1000 词，Result 与 Discussion 严格分离
+- [ ] 已声明至少 2 项统计局限性
+- [ ] 与队友数据口径对齐（`entity_type == 'Company'`、`status` 分类）
+- [ ] Presentation 脚本已排练，控制在 2.5-3 分钟内
 
 ---
 
-*文档版本：v1.3 | 创建日期：2026-04-28 | 更新日期：2026-04-28 | 适用于 NAA1661 Data Scholarship Final Project*
-*v1.2 更新：整合实际 Crunchbase 多表数据集（`Datasets/` 目录），所有代码均使用真实表名和字段名。*
-*v1.3 更新：基于「映射变量（数据类型）→ 统计路径 → 子研究问题」逻辑链重构 1.4/1.5 节，新增控制变量声明和 5 条统计路径（A–E），Step 5 按路径重组为 5.1–5.7，Step 6 叙事框架与检查清单同步对齐。*
+*文档版本：v2.0 | 创建日期：2026-04-28 | 更新日期：2026-05-06 | 适用于 NAA1661 Data Scholarship Final Project*
+*v2.0 更新：基于 Reflection 字数限制（500-1000 词）和图片限制（4 张），将 10 个 Sub-RQ 精简为 3 个核心 RQ（Volume / Milestones / Velocity → Exit Success），重新设计 4 张图表（覆盖 plotly.subplots / plotly.graph_objects / plotly.express / seaborn），Step 5-6 完全重写对齐。*

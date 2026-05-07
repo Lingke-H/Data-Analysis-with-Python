@@ -1,2 +1,15 @@
+# OS
 .DS_Store
+
+# Data (too large for git)
 Datasets/
+
+# Virtual env
+.venv/
+
+# Temp / generated artifacts
+_fig1_inline.html
+echarts.min.js
+~$*
+*.pyc
+__pycache__/
