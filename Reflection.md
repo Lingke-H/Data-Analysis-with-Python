@@ -21,11 +21,11 @@ Venture capital (VC) is widely regarded as a catalyst for innovation, yet the re
 
 **Feature engineering.** Three independent variables were constructed: (1) total funding, binned into six tiers from under \$1M to over \$500M; (2) number of funding rounds, as a discrete count capped at 10+; and (3) average time between rounds, computed as the mean inter-round interval in months and binned into five speed categories. The dependent variable is a binary indicator of exit success, coded as 1 if the company achieved an IPO or was acquired, and 0 otherwise. The overall baseline exit rate in the sample is 10.1%.
 
-**Tools.** Data wrangling was performed with *pandas* and *NumPy* in Python. Visualisation employed three distinct packages to demonstrate breadth of technical competency: *pyecharts* for the hierarchical TreeMap (Fig 1), *Plotly* with graph_objects and make_subplots for the stacked bar chart and bubble chart (Figs 2–3), and *seaborn* with *Matplotlib* for the annotated heatmap (Fig 4). A unified professional colour palette was applied across all figures for visual coherence.
+**Tools.** Data wrangling was performed with *pandas* and *NumPy* in Python. Visualisation employed two complementary packages: *Plotly* (graph_objects and express) for the interactive TreeMap, stacked bar chart, and bubble chart (Figs 1–3), and *seaborn* with *Matplotlib* for the annotated heatmap (Fig 4). A unified professional colour palette was applied across all figures for visual coherence.
 
 # Result
 
-**Fig 1 (EDA Overview)** presents a hierarchical TreeMap of the dataset's 12 largest industries, with rectangle area encoding company count and colour encoding company status. Software and Web dominate the ecosystem by volume, while Biotech shows a comparatively higher exit-success proportion, suggesting that industry context moderates the funding–exit relationship.
+**Fig 1 (EDA Overview)** presents a hierarchical TreeMap of the dataset's 12 largest industries, with rectangle area encoding company count and four discrete colours distinguishing exit status (Operating, Acquired, IPO, Closed). Software and Web dominate the ecosystem by volume, while Biotech shows a comparatively higher exit-success proportion — its IPO and Acquired tiles are visibly prominent relative to its size — suggesting that industry context moderates the funding–exit relationship.
 
 **Fig 2 (RQ1: Volume)** decomposes exit rate by funding bracket into IPO rate and Acquired rate using a stacked bar chart, with sample size plotted on a secondary axis. Exit rate rises monotonically from 3.0% (under \$1M) to 42.1% (over \$500M). Notably, the composition shifts: in lower brackets, Acquired exits dominate, while in the highest bracket, the IPO rate alone reaches 36.8%. The overall average exit rate (10.1%) serves as a baseline reference line.
 
@@ -55,11 +55,9 @@ All three research questions are addressed with empirical evidence. The results 
 
 [6] Da Rin, M., Hellmann, T. & Puri, M. (2013). A survey of venture capital research. *Handbook of the Economics of Finance*, 2, 573–648.
 
-[7] Pyecharts Documentation. (2023). *pyecharts — A Python Echarts Plotting Library*. https://pyecharts.org/
+[7] Plotly Technologies Inc. (2023). *Plotly Python Open Source Graphing Library*. https://plotly.com/python/
 
-[8] Plotly Technologies Inc. (2023). *Plotly Python Open Source Graphing Library*. https://plotly.com/python/
-
-[9] Waskom, M. (2021). seaborn: statistical data visualization. *Journal of Open Source Software*, 6(60), 3021.
+[8] Waskom, M. (2021). seaborn: statistical data visualization. *Journal of Open Source Software*, 6(60), 3021.
 
 \newpage
 

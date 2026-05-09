@@ -14,6 +14,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import base64, io, os
+from pyecharts.charts import Bar as PyBar, Pie as PyPie
+from pyecharts import options as opts
+from pyecharts.globals import ThemeType
+from pyecharts.commons.utils import JsCode
 
 DATA = "Datasets"
 
@@ -69,140 +73,135 @@ df['speed_bin'] = pd.cut(
 )
 
 # ============================================================
-# Fig 1: Plotly TreeMap — Industry × Status Hierarchy
+# Fig 1: Pyecharts TreeMap — Industry × Status Hierarchy (Week 5)
 # ============================================================
-print("Generating Fig 1 (Plotly TreeMap)...")
+print("Generating Fig 1 (pyecharts TreeMap)...")
 
-# --- Unified palette (shared with Figs 2-4) ---
-clr_acq   = '#5B8DBE'   # steel blue  — Acquired
-clr_ipo   = '#7BC8A4'   # sage green  — IPO
-clr_oper  = '#6B7B8D'   # muted slate — Operating
-clr_close = '#C0706B'   # muted rose  — Closed
-clr_text  = '#3B3B3B'   # dark charcoal
-clr_sub   = '#6B7B8D'   # muted slate
-clr_ref   = '#B0B0B0'   # neutral grey
+from pyecharts.charts import TreeMap as PyTreeMap
 
 status_order = ['operating', 'acquired', 'ipo', 'closed']
-status_colors = {
-    'operating': clr_oper, 'acquired': clr_acq,
-    'ipo': clr_ipo, 'closed': clr_close
-}
-status_labels = {
-    'operating': 'Operating', 'acquired': 'Acquired',
-    'ipo': 'IPO', 'closed': 'Closed'
+palette = {
+    'operating': '#8e99a4', 'acquired': '#2980b9',
+    'ipo': '#27ae60', 'closed': '#c0392b'
 }
 
-# Build hierarchical dataframe for px.treemap: Industry → Status
-top12 = df['category_code'].value_counts().head(12).index.tolist()
-df_tree = df[df['category_code'].isin(top12)].copy()
-df_tree['industry'] = df_tree['category_code'].str.title()
-df_tree['status_label'] = df_tree['status'].map(status_labels)
+# Build hierarchical data: Industry → Status
+top12 = df['category_code'].value_counts().head(12)
+tree_data = []
+for industry in top12.index:
+    sub = df[df['category_code'] == industry]
+    exit_rate = sub['exit_success'].mean()
+    children = []
+    for st in status_order:
+        n = int((sub['status'] == st).sum())
+        if n > 0:
+            children.append({
+                'name': st.upper(),
+                'value': n,
+                'itemStyle': {'color': palette[st]}
+            })
+    tree_data.append({
+        'name': f'{industry}',
+        'children': children
+    })
 
-tree_agg = (
-    df_tree.groupby(['industry', 'status_label'])
-    .agg(count=('id', 'size'))
-    .reset_index()
-)
-
-# Industry-level stats for hover
-industry_stats = (
-    df_tree.groupby('industry')
-    .agg(total=('id', 'size'), exit_rate=('exit_success', 'mean'))
-    .reset_index()
-)
-
-# Re-map status colors: maximise hue separation, avoid red-on-red
-status_tile_colors = {
-    'Operating': '#CC8A83',   # light rose-terracotta
-    'Acquired':  '#5B8DBE',   # steel blue
-    'IPO':       '#7BC8A4',   # sage green
-    'Closed':    '#D4A76A',   # warm amber (NOT rose — avoids red cluster)
-}
-
-# Build explicit hierarchy for go.Treemap
-ids, labels, parents, values, colors, hovers = [], [], [], [], [], []
-industry_order = df_tree['industry'].value_counts().index.tolist()
-
-for ind in industry_order:
-    ind_row = industry_stats[industry_stats['industry'] == ind].iloc[0]
-    ids.append(ind)
-    labels.append(ind)
-    parents.append('')
-    values.append(0)
-    colors.append('#9EAAB8')  # cool silver-grey for industry header
-    hovers.append(
-        f"<b>{ind}</b><br>"
-        f"Total: {int(ind_row['total']):,}<br>"
-        f"Exit rate: {ind_row['exit_rate']:.1%}"
-    )
-
-    sub = tree_agg[tree_agg['industry'] == ind].sort_values('count', ascending=False)
-    for _, row in sub.iterrows():
-        st = row['status_label']
-        cnt = int(row['count'])
-        uid = f"{ind}/{st}"
-        ids.append(uid)
-        labels.append(st)
-        parents.append(ind)
-        values.append(cnt)
-        colors.append(status_tile_colors[st])
-        hovers.append(
-            f"<b>{ind} → {st}</b><br>"
-            f"Companies: {cnt:,}<br>"
-            f"Industry total: {int(ind_row['total']):,}<br>"
-            f"Industry exit rate: {ind_row['exit_rate']:.1%}"
-        )
-
-fig1 = go.Figure(go.Treemap(
-    ids=ids,
-    labels=labels,
-    parents=parents,
-    values=values,
-    branchvalues='remainder',
-    marker=dict(
-        colors=colors,
-        cornerradius=3,
-        line=dict(width=0.5, color='white'),
-    ),
-    texttemplate='<b>%{label}</b><br>%{value:,}',
-    textfont=dict(size=11, family='Inter, sans-serif', color='white'),
-    hovertext=hovers,
-    hoverinfo='text',
-    tiling=dict(packing='squarify', pad=2),
-    pathbar=dict(visible=False),
-))
-
-fig1.update_layout(
-    title=dict(
-        text=(
-            f"Fig 1 (EDA): Distribution of VC-Backed Startups by Industry and Exit Status<br>"
-            f"<sup style='color:{clr_sub}'>{len(df):,} companies across "
-            f"{df['category_code'].nunique()} industries  |  "
-            f"Overall exit rate: {df['exit_success'].mean():.1%}  |  "
-            f"Median funding: ${df['funding_total_usd'].median()/1e6:.1f}M</sup>"
-        ),
-        font=dict(size=15, color=clr_text, family='Inter, sans-serif'),
-        x=0.5, xanchor='center'
-    ),
-    font=dict(family='Inter, sans-serif', color=clr_text),
-    margin=dict(l=10, r=10, t=90, b=10),
-    paper_bgcolor='white',
-    # Manual legend via annotations — treemap has no built-in legend
-    annotations=[
-        dict(
-            text=(
-                f"<span style='color:{status_tile_colors['Operating']}'>■</span> Operating &nbsp;&nbsp;"
-                f"<span style='color:{status_tile_colors['Acquired']}'>■</span> Acquired &nbsp;&nbsp;"
-                f"<span style='color:{status_tile_colors['IPO']}'>■</span> IPO &nbsp;&nbsp;"
-                f"<span style='color:{status_tile_colors['Closed']}'>■</span> Closed"
+treemap = (
+    PyTreeMap(init_opts=opts.InitOpts(
+        width='1060px', height='580px',
+        bg_color='#fafbfc'
+    ))
+    .add(
+        series_name='Companies',
+        data=tree_data,
+        visual_min=10,
+        leaf_depth=1,
+        levels=[
+            opts.TreeMapLevelsOpts(
+                treemap_itemstyle_opts=opts.TreeMapItemStyleOpts(
+                    border_color='#fafbfc', border_width=3, gap_width=3
+                )
             ),
-            x=0.5, y=-0.02, xref='paper', yref='paper',
-            showarrow=False,
-            font=dict(size=12, color=clr_text, family='Inter, sans-serif'),
-            xanchor='center'
+            opts.TreeMapLevelsOpts(
+                treemap_itemstyle_opts=opts.TreeMapItemStyleOpts(
+                    border_color='#fafbfc', border_width=1, gap_width=1
+                ),
+                color_saturation=[0.35, 0.75]
+            )
+        ],
+        label_opts=opts.LabelOpts(
+            position='inside',
+            formatter=JsCode(
+                'function(p){'
+                'if(p.data.children) return p.name+"\\n"+p.value+" companies";'
+                'return p.name+"\\n"+p.value;}'
+            ),
+            font_size=11,
+            color='#fff',
+            font_weight='bold'
+        ),
+        breadcrumb_opts=opts.TreeMapBreadcrumbOpts(pos_bottom='2%')
+    )
+    .set_global_opts(
+        title_opts=opts.TitleOpts(
+            title='Fig 1: Tech Startup Landscape — Industry × Status TreeMap',
+            subtitle=(
+                f'{len(df):,} VC-backed companies across {df["category_code"].nunique()} industries  |  '
+                f'Exit rate: {df["exit_success"].mean():.1%}  |  '
+                f'Median funding: ${df["funding_total_usd"].median()/1e6:.1f}M'
+            ),
+            pos_left='center',
+            title_textstyle_opts=opts.TextStyleOpts(
+                font_size=15, color='#2c3e50', font_weight='bold'
+            ),
+            subtitle_textstyle_opts=opts.TextStyleOpts(
+                font_size=10, color='#7f8c8d'
+            )
+        ),
+        legend_opts=opts.LegendOpts(is_show=False),
+        toolbox_opts=opts.ToolboxOpts(
+            is_show=True, pos_right='2%', pos_top='2%',
+            feature=opts.ToolBoxFeatureOpts(
+                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
+                    pixel_ratio=3, title='Save PNG',
+                    background_color='#fafbfc'
+                )
+            )
+        ),
+        tooltip_opts=opts.TooltipOpts(
+            formatter=JsCode(
+                'function(p){'
+                'if(p.treePathInfo.length>1){'
+                '  var ind=p.treePathInfo[1].name;'
+                '  return "<b>"+ind+" → "+p.name+"</b><br/>Companies: "+p.value.toLocaleString();'
+                '}return "<b>"+p.name+"</b><br/>Total: "+p.value.toLocaleString()+" companies";}'
+            )
         )
-    ]
+    )
 )
+
+# Render pyecharts HTML, then swap CDN to jsdelivr for proxy compatibility
+fig1_html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_fig1_pyecharts.html')
+treemap.render(fig1_html_path)
+
+import re
+with open(fig1_html_path, 'r', encoding='utf-8') as f:
+    fig1_raw = f.read()
+# Also save a local-CDN version for standalone use
+fig1_raw_local = fig1_raw.replace(
+    'https://assets.pyecharts.org/assets/v6/echarts.min.js',
+    'echarts.min.js'
+)
+with open(fig1_html_path, 'w', encoding='utf-8') as f:
+    f.write(fig1_raw_local)
+
+# Extract body content for inline embedding
+body_match = re.search(r'<body[^>]*>(.*?)</body>', fig1_raw, re.DOTALL)
+fig1_body = body_match.group(1).strip() if body_match else ''
+
+# Read echarts library for inline embedding
+echarts_js_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'echarts.min.js')
+with open(echarts_js_path, 'r', encoding='utf-8') as f:
+    echarts_js = f.read()
 
 # ============================================================
 # Fig 2: Stacked Bar (IPO vs Acquired) + Line (RQ1)
@@ -222,7 +221,13 @@ exit_detail = (
 )
 overall_rate = df['exit_success'].mean()
 
-clr_line  = '#A0522D'   # warm sienna (sample-size line)
+# --- Professional palette ---
+clr_acq   = '#5B8DBE'   # steel blue
+clr_ipo   = '#7BC8A4'   # sage green
+clr_line  = '#A0522D'   # warm sienna
+clr_ref   = '#B0B0B0'   # neutral grey
+clr_text  = '#3B3B3B'   # dark charcoal
+clr_sub   = '#6B7B8D'   # muted slate
 
 fig2 = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -543,7 +548,6 @@ with open(fig4_path, 'rb') as f:
 print("Exporting PNGs for Reflection...")
 _dir = os.path.dirname(__file__) or '.'
 
-fig1.write_image(os.path.join(_dir, 'fig1_placeholder.png'), width=1100, height=620, scale=2)
 fig2.write_image(os.path.join(_dir, 'fig2_placeholder.png'), width=1100, height=540, scale=2)
 fig3.write_image(os.path.join(_dir, 'fig3_placeholder.png'), width=1100, height=550, scale=2)
 
@@ -551,7 +555,7 @@ fig3.write_image(os.path.join(_dir, 'fig3_placeholder.png'), width=1100, height=
 import shutil
 shutil.copy2(fig4_path, os.path.join(_dir, 'fig4_placeholder.png'))
 
-print("  ✓ fig1–4 PNGs exported")
+print("  ✓ fig2_placeholder.png, fig3_placeholder.png, fig4_placeholder.png exported")
 
 # ============================================================
 # Combine into a single HTML page
@@ -588,20 +592,24 @@ html_parts.append("""<!DOCTYPE html>
 </p>
 """)
 
-# Fig 1 — Plotly TreeMap
-fig1_html = fig1.to_html(full_html=False, include_plotlyjs='cdn')
-html_parts.append(f"""
+# Fig 1 — pyecharts TreeMap inlined (echarts lib + chart code, no iframe)
+html_parts.append("""
 <div class="fig-section">
-  <h2>Fig 1: EDA 概览 — Plotly TreeMap <span class="badge refl">Reflection</span></h2>
-  <p style="color:#7f8c8d; font-size:0.9em;">技能: <code>px.treemap</code> 层级矩形树图 · <code>color_discrete_map</code> 状态配色 · <code>textinfo</code> 标签定制 · <code>hovertemplate</code> 交互提示</p>
-  <p style="color:#e67e22; font-size:0.85em;">💡 可点击色块下钻查看行业内部构成</p>
-  {fig1_html}
+  <h2>Fig 1: EDA 概览 — Pyecharts TreeMap <span class="badge refl">Reflection</span></h2>
+  <p style="color:#7f8c8d; font-size:0.9em;">技能: <code>pyecharts.TreeMap</code> 层级矩形树图 · <code>TreeMapLevelsOpts</code> 多层样式 · <code>JsCode</code> 自定义 tooltip/label · <code>breadcrumb</code> · <code>ToolboxOpts(save_as_image)</code></p>
+  <p style="color:#e67e22; font-size:0.85em;">💡 可点击色块下钻查看行业内部构成；右上角相机图标导出 PNG</p>
+  <script>
+""")
+html_parts.append(echarts_js)
+html_parts.append("</script>")
+html_parts.append(fig1_body)
+html_parts.append("""
   <div class="takeaway">矩形面积 = 公司数量。12 大行业按公司数排列，内部按 Operating(灰) / Acquired(蓝) / IPO(绿) / Closed(红) 分色。Software 和 Web 主导生态，但 Biotech 退出成功率更高。</div>
 </div>
 """)
 
 # Fig 2-4 — use f-string (plotly/seaborn output is safe)
-fig2_html = fig2.to_html(full_html=False, include_plotlyjs=False)
+fig2_html = fig2.to_html(full_html=False, include_plotlyjs='cdn')
 fig3_html = fig3.to_html(full_html=False, include_plotlyjs=False)
 
 html_parts.append(f"""
