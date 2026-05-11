@@ -8,8 +8,10 @@ Datasets/
 .venv/
 
 # Temp / generated artifacts
-_fig1_inline.html
-echarts.min.js
+output/
 ~$*
 *.pyc
 __pycache__/
+
+# Course materials (large binaries)
+course/
