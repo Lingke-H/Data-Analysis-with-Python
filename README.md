@@ -1,5 +1,7 @@
 # Capital, Timing, and Growth: Visualizing What Drives Startup Success
 
+> [中文版见下方 / Chinese version below](#中文版)
+
 > **NAA1661 Data Scholarship** — University of Nottingham Ningbo China, Spring 2026
 >
 > **Group B** — Python Track
@@ -116,6 +118,7 @@ pandoc docs/Reflection.md -o docs/Reflection.pdf --pdf-engine=pdflatex
 
 ---
 
+<a id="中文版"></a>
 # 资本、时间与增长：可视化驱动创业成功的因素
 
 > **NAA1661 数据学术** — 宁波诺丁汉大学，2026 Spring
