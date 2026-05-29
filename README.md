@@ -12,7 +12,7 @@ This group project explores the global startup ecosystem through data visualisat
 
 | Part | Title | Author | Focus |
 |------|-------|--------|-------|
-| **A** | Starting Lines: Where Income, Geography, and Industry Shape Startup Ecosystems | — | Country-level startup activity vs. economic indicators |
+| **A** | Starting Lines: Where Income, Geography, and Industry Shape Startup Ecosystems | Yifan YE | Country-level startup activity vs. economic indicators |
 | **B** | Capital Pulse: A Deep Analysis from Global Flow Paths to Valuation Structures | Hengji Zhao | Cross-continent capital flows and sectoral valuation |
 | **C** | Timing Matters: A Survival Analysis of Global Startups Across Founding and Funding Cycles | Lingyi Peng | Funding timing, survival patterns, and failure cycles |
 | **D** | Growth Decoded: A Funding Pattern Analysis from Capital Investment to Startup Exit Success | Lingke Huang | Funding volume, milestones, and velocity vs. exit outcomes |
@@ -131,10 +131,10 @@ pandoc docs/Reflection.md -o docs/Reflection.pdf --pdf-engine=pdflatex
 
 | 部分 | 标题 | 作者 | 研究重点 |
 |------|------|------|----------|
-| **A** | Starting Lines: 收入、地理与行业如何塑造创业生态 | — | 国家层面创业活动与经济指标 |
-| **B** | Capital Pulse: 全球资金流向与估值结构深度分析 | 赵恒基 | 跨大洲资本流动与行业估值 |
+| **A** | Starting Lines: 收入、地理与行业如何塑造创业生态 | 叶一凡 | 国家层面创业活动与经济指标 |
+| **B** | Capital Pulse: 全球资金流向与估值结构深度分析 | 赵恒稷 | 跨大洲资本流动与行业估值 |
 | **C** | Timing Matters: 全球初创企业的生存分析 | 彭令仪 | 融资时机、生存模式与失败周期 |
-| **D** | Growth Decoded: 资本投入模式与退出成功的关联分析 | 黄令科 | 融资总量、轮次与速度对退出的影响 |
+| **D** | Growth Decoded: 资本投入模式与退出成功的关联分析 | 黄令珂 | 融资总量、轮次与速度对退出的影响 |
 
 **核心结论：** 创业成功并非随机——它受地理、资本结构、时间节奏和融资模式的共同塑造。可视化使我们从近 28,000 条记录中发现了这些规律。
 
